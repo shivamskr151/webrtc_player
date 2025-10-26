@@ -1,0 +1,86 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx-simple.conf:/etc/nginx/nginx.conf:ro
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - frontend
+      - ovenmediaengine
+    env_file:
+      - .env
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_SIGNALING_URL=${VITE_SIGNALING_URL:-ws://localhost:3333/app/camera_0051}
+    depends_on:
+      - ovenmediaengine
+    env_file:
+      - .env
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest-ffmpeg
+    container_name: mediamtx
+    restart: always
+    ports:
+      - "${MEDIAMTX_API_PORT:-8887}:8888"     # HTTP API
+      - "${MEDIAMTX_RTMP_PORT:-1935}:1935"    # RTMP
+      - "${MEDIAMTX_RTSP_PORT:-8554}:8554"    # RTSP
+    volumes:
+      - ./mtx_conf/mediamtx.yml:/mediamtx.yml
+    environment:
+      - MTX_CONF=/mediamtx.yml
+    depends_on:
+      - ovenmediaengine
+    env_file:
+      - .env
+
+  ovenmediaengine:
+    image: airensoft/ovenmediaengine:latest
+    container_name: ome
+    restart: always
+    ports:
+      - "${OME_RTMP_PORT:-1938}:1938"         # RTMP
+      - "${OME_RTMP_PULL_PORT:-1939}:1939"    # RTMPPull
+      - "${OME_WEBRTC_WS_PORT:-3333}:3333"    # WebRTC signaling (WS)
+      - "${OME_WEBRTC_WSS_PORT:-3334}:3334"   # WebRTC signaling (WSS)
+      - "${OME_HTTPS_PORT:-8443}:8443"        # HTTPS fallback
+      - "${OME_TURN_PORT:-3478}:3478/tcp"     # TURN TCP
+      - "${OME_TURN_PORT:-3478}:3478/udp"     # TURN UDP
+      - "${OME_ICE_START_PORT:-40000}-${OME_ICE_END_PORT:-40010}:${OME_ICE_START_PORT:-40000}-${OME_ICE_END_PORT:-40010}/udp"  # ICE candidates
+      - "${OME_ICE_ADDITIONAL_PORT:-9000}:${OME_ICE_ADDITIONAL_PORT:-9000}/udp"                # Additional ICE candidate
+    volumes:
+      - ./ome_conf:/opt/ovenmediaengine/bin/origin_conf
+    environment:
+      - OME_HTTPS_ENABLE=${OME_HTTPS_ENABLE:-true}
+      - OME_LOG_LEVEL=${OME_LOG_LEVEL:-info}
+    env_file:
+      - .env
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${EMAIL:-admin@localhost} --agree-tos --no-eff-email -d ${DOMAIN:-localhost}
+    env_file:
+      - .env
+
+volumes:
+  certbot_conf:
+  certbot_www:
+
+

@@ -1,0 +1,34 @@
+# MediaMTX Configuration
+# This configuration pulls RTMP stream from external source and forwards to OME
+
+logLevel: info
+logDestinations: [stdout]
+
+api: yes
+apiAddress: ":8888"
+
+rtmp: yes
+rtmpAddress: ":1935"
+
+rtsp: yes
+rtspAddress: ":8554"
+
+# HLS disabled - WebRTC only
+hls: no
+
+# Disable WebRTC to avoid port conflict
+webrtc: no
+
+# Read timeout - keep connections alive longer
+readTimeout: 30s
+writeTimeout: 30s
+
+# Paths configuration
+paths:
+  # Main camera stream - persistent forwarding to OME
+  camera_0051:
+    # Pull from external source and forward to OME (video only)
+    runOnDemand: ffmpeg -i "rtmp://safetycaptain.arresto.in/camera_0051/0051?username=wrakash&password=akash@1997" -c:v copy -an -f flv rtmp://ome:1938/app/camera_0051
+    runOnDemandRestart: yes
+    runOnDemandStartTimeout: 30s
+    runOnDemandCloseAfter: 10s
