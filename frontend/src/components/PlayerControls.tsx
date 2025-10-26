@@ -4,14 +4,18 @@ interface PlayerControlsProps {
   onPlay: () => void;
   onStop: () => void;
   onReconnect: () => void;
+  onSnapshot: () => void;
   disabled?: boolean;
+  isPlaying?: boolean;
 }
 
 const PlayerControls = memo<PlayerControlsProps>(({ 
   onPlay, 
   onStop, 
   onReconnect, 
-  disabled = false 
+  onSnapshot,
+  disabled = false,
+  isPlaying = false
 }) => {
   return (
     <div className="flex gap-3">
@@ -35,6 +39,13 @@ const PlayerControls = memo<PlayerControlsProps>(({
         className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200"
       >
         🔄 Reconnect
+      </button>
+      <button
+        onClick={onSnapshot}
+        disabled={disabled || !isPlaying}
+        className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200"
+      >
+        📸 Take Snapshot
       </button>
     </div>
   );
