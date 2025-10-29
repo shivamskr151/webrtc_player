@@ -13,6 +13,10 @@ rtmpAddress: ":1935"
 rtsp: yes
 rtspAddress: ":8554"
 
+# Network configuration for better connection stability
+# rtmpEncryption: "plain"
+# rtspEncryption: "plain"
+
 # HLS disabled - WebRTC only
 hls: no
 
@@ -20,15 +24,15 @@ hls: no
 webrtc: no
 
 # Read timeout - keep connections alive longer
-readTimeout: 30s
-writeTimeout: 30s
+readTimeout: 60s
+writeTimeout: 60s
 
 # Paths configuration
 paths:
   # Main camera stream - persistent forwarding to OME
   camera_0051:
     # Pull from external source and forward to OME (video only)
-    runOnDemand: ffmpeg -i "rtmp://safetycaptain.arresto.in/camera_0051/0051?username=wrakash&password=akash@1997" -c:v copy -an -f flv rtmp://ome:1938/app/camera_0051
+    runOnDemand: ffmpeg -timeout 60000000 -rw_timeout 60000000 -rtmp_conn "S:1" -i "rtmp://safetycaptain.arresto.in/camera_0051/0051?username=wrakash&password=akash@1997" -c:v copy -an -f flv rtmp://ome:1938/app/camera_0051
     runOnDemandRestart: yes
-    runOnDemandStartTimeout: 30s
-    runOnDemandCloseAfter: 10s
+    runOnDemandStartTimeout: 60s
+    runOnDemandCloseAfter: 30s
